@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Interactive Mapping: Bicycle Accessibility</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- GeoRaster & GeoRaster Layer for Leaflet -->
+  <script src="https://unpkg.com/georaster"></script>
+  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { height: 100vh; }
+    .sidebar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      z-index: 1000;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-family: sans-serif;
+      max-width: 250px;
+    }
+    .sidebar h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="sidebar">
+    <h3>Map Layers</h3>
+    <label>
+      <input type="checkbox" id="geojsonLayer" checked>
+      Show GeoJSON Layer
+    </label>
+    <br>
+    <label>
+      <input type="checkbox" id="geotiffLayer" checked>
+      Show GeoTIFF Layer
+    </label>
+    <hr>
+    <label for="areaSelector">Select Area:</label>
+    <select id="areaSelector">
+      <option value="urban">Urban Core</option>
+      <option value="residential">Residential Neighborhood</option>
+      <option value="suburban">Suburban Area</option>
+    </select>
+    <button id="loadArea">Load Area</button>
+  </div>
+  
+  
+  <script>
+    // Initialize the map centered on a default location (e.g., New York City)
+    var map = L.map('map').setView([40.7128, -74.0060], 13);
+
+    // Add OpenStreetMap base layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+
+    // Global variables to hold our layers
+    var geojsonLayer, geotiffLayer;
+
+    // Function to load GeoJSON based on selected area
+    function loadGeoJSON(area) {
+      if (geojsonLayer) { 
+        map.removeLayer(geojsonLayer); 
+      }
+      
+      var url;
+      // Select GeoJSON file URL based on the area
+      if (area === 'urban') {
+        url = 'data/conveyal_isochrone_testing_for_urop_no_modifications_baseline_at_20_minutes.json';
+      } else if (area === 'residential') {
+        url = 'data/isochrone_testing_no_modifications_baseline_mattapan.json';
+      } else if (area === 'suburban') {
+        url = 'data/isochrone_testing_no_modifications_baseline_mattapan.json';
+      }
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          geojsonLayer = L.geoJSON(data, {
+            style: {
+              color: 'blue',
+              weight: 2,
+              opacity: 0.6
+            },
+            onEachFeature: function(feature, layer) {
+              if (feature.properties && feature.properties.name) {
+                layer.bindPopup(feature.properties.name);
+              }
+            }
+          }).addTo(map);
+          map.fitBounds(geojsonLayer.getBounds());
+        })
+        .catch(error => {
+          console.error('Error loading GeoJSON:', error);
+        });
+    }
+
+    // Function to load GeoTIFF based on selected area
+    function loadGeoTIFF(area) {
+      if (geotiffLayer) { 
+        map.removeLayer(geotiffLayer); 
+      }
+      
+      var url;
+      // Select GeoTIFF file URL based on the area
+      if (area === 'urban') {
+        url = 'data/conveyal_geotiff_testing_for_urop_no_modifications_baseline.geotiff';
+      } else if (area === 'residential') {
+        url = 'data/geotiff_testing_no_modifications_baseline_mattapan.geotiff';
+      } else if (area === 'suburban') {
+        url = 'data/geotiff_testing_no_modifications_baseline_mattapan.geotiff';
+      }
+      
+      fetch(url)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => {
+          return parseGeoraster(arrayBuffer);
+        })
+        .then(georaster => {
+          geotiffLayer = new GeoRasterLayer({
+            georaster: georaster,
+            opacity: 0.7,
+            pixelValuesToColorFn: function(pixelValue) {
+              // Customize this function based on your data values.
+              // Here we assume pixelValue ranges from 0 (low) to 255 (high travel time)
+              if (pixelValue === 0) return null;
+              var opacity = pixelValue / 255;
+              return "rgba(255, 0, 0, " + opacity + ")";
+            }
+          });
+          geotiffLayer.addTo(map);
+        })
+        .catch(error => {
+          console.error('Error loading GeoTIFF:', error);
+        });
+    }
+
+    // Function to load both layers based on the selected area
+    function loadAreaData(area) {
+      loadGeoJSON(area);
+      loadGeoTIFF(area);
+    }
+
+    // Load default area on startup
+    loadAreaData('urban');
+
+    // Handle area selection change
+    document.getElementById('loadArea').addEventListener('click', function() {
+      var area = document.getElementById('areaSelector').value;
+      loadAreaData(area);
+    });
+
+    // Toggle GeoJSON layer visibility
+    document.getElementById('geojsonLayer').addEventListener('change', function(e) {
+      if (geojsonLayer) {
+        if (e.target.checked) {
+          geojsonLayer.addTo(map);
+        } else {
+          map.removeLayer(geojsonLayer);
+        }
+      }
+    });
+
+    // Toggle GeoTIFF layer visibility
+    document.getElementById('geotiffLayer').addEventListener('change', function(e) {
+      if (geotiffLayer) {
+        if (e.target.checked) {
+          geotiffLayer.addTo(map);
+        } else {
+          map.removeLayer(geotiffLayer);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
