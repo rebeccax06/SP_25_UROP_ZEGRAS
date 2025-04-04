@@ -4,16 +4,18 @@
   <title>Interactive Mapping: Bicycle Accessibility</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Leaflet CSS -->
+  <!-- Leaflet CSS - Required for styling the map and its controls -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Leaflet JS -->
+  <!-- Leaflet JS - The core mapping library -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- GeoRaster & GeoRaster Layer for Leaflet -->
+  <!-- GeoRaster - Library for parsing GeoTIFF files -->
   <script src="https://unpkg.com/georaster"></script>
+  <!-- GeoRaster Layer - Creates Leaflet layers from GeoTIFF data -->
   <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
   <style>
     body { margin: 0; padding: 0; }
     #map { height: 100vh; }
+    /* Sidebar styling for controls */
     .sidebar {
       position: absolute;
       top: 10px;
@@ -29,12 +31,23 @@
     .sidebar h3 {
       margin-top: 0;
     }
+    .error-message {
+      color: red;
+      font-weight: bold;
+    }
+    .loading {
+      display: none;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
+  <!-- main map container -->
   <div id="map"></div>
+  <!-- Control sidebar -->
   <div class="sidebar">
     <h3>Map Layers</h3>
+    <!-- Layer toggle controls -->
     <label>
       <input type="checkbox" id="geojsonLayer" checked>
       Show GeoJSON Layer
@@ -45,6 +58,7 @@
       Show GeoTIFF Layer
     </label>
     <hr>
+     <!-- Area selection controls -->
     <label for="areaSelector">Select Area:</label>
     <select id="areaSelector">
       <option value="urban">Urban Core</option>
@@ -52,8 +66,9 @@
       <option value="suburban">Suburban Area</option>
     </select>
     <button id="loadArea">Load Area</button>
+    <div id="loading" class="loading">Loading data...</div>
+    <div id="errorMessage" class="error-message"></div>
   </div>
-  
   
   <script>
     // Initialize the map centered on a default location (e.g., New York City)
@@ -67,6 +82,19 @@
 
     // Global variables to hold our layers
     var geojsonLayer, geotiffLayer;
+    var loadingElement = document.getElementById('loading');
+    var errorMessageElement = document.getElementById('errorMessage');
+
+    // Function to show error message
+    function showError(message) {
+      errorMessageElement.textContent = message;
+      loadingElement.style.display = 'none';
+    }
+
+    // Function to clear error message
+    function clearError() {
+      errorMessageElement.textContent = '';
+    }
 
     // Function to load GeoJSON based on selected area
     function loadGeoJSON(area) {
@@ -84,8 +112,16 @@
         url = 'data/isochrone_testing_no_modifications_baseline_mattapan.json';
       }
       
+      clearError();
+      loadingElement.style.display = 'block';
+      
       fetch(url)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load GeoJSON (${response.status} ${response.statusText})`);
+          }
+          return response.json();
+        })
         .then(data => {
           geojsonLayer = L.geoJSON(data, {
             style: {
@@ -100,9 +136,11 @@
             }
           }).addTo(map);
           map.fitBounds(geojsonLayer.getBounds());
+          loadingElement.style.display = 'none';
         })
         .catch(error => {
           console.error('Error loading GeoJSON:', error);
+          showError('Error loading GeoJSON: ' + error.message);
         });
     }
 
@@ -122,38 +160,78 @@
         url = 'data/geotiff_testing_no_modifications_baseline_mattapan.geotiff';
       }
       
+      clearError();
+      loadingElement.style.display = 'block';
+      
+      // Check if georaster package is available
+      if (typeof parseGeoraster !== 'function') {
+        showError('GeoRaster library not loaded. Check your network connection.');
+        return;
+      }
+      
       fetch(url)
-        .then(response => response.arrayBuffer())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to load GeoTIFF (${response.status} ${response.statusText})`);
+          }
+          return response.arrayBuffer();
+        })
         .then(arrayBuffer => {
-          return parseGeoraster(arrayBuffer);
+          // Implement a timeout to prevent browser from hanging
+          return Promise.race([
+            parseGeoraster(arrayBuffer),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('GeoTIFF processing timed out')), 10000)
+            )
+          ]);
         })
         .then(georaster => {
           geotiffLayer = new GeoRasterLayer({
             georaster: georaster,
             opacity: 0.7,
+            resolution: 256, // Lower resolution to improve performance
             pixelValuesToColorFn: function(pixelValue) {
-              // Customize this function based on your data values.
-              // Here we assume pixelValue ranges from 0 (low) to 255 (high travel time)
-              if (pixelValue === 0) return null;
-              var opacity = pixelValue / 255;
+              if (pixelValue === 0 || pixelValue === null || pixelValue === undefined) return null;
+              // Simplified color function to improve performance
+              var opacity = Math.min(pixelValue / 255, 1);
               return "rgba(255, 0, 0, " + opacity + ")";
             }
           });
           geotiffLayer.addTo(map);
+          loadingElement.style.display = 'none';
         })
         .catch(error => {
           console.error('Error loading GeoTIFF:', error);
+          showError('Error loading GeoTIFF: ' + error.message);
+          // Load GeoJSON even if GeoTIFF fails
+          document.getElementById('geotiffLayer').checked = false;
         });
     }
 
     // Function to load both layers based on the selected area
     function loadAreaData(area) {
+      document.getElementById('loadArea').disabled = true;
       loadGeoJSON(area);
-      loadGeoTIFF(area);
+      
+      // Only try to load GeoTIFF if checkbox is checked
+      if (document.getElementById('geotiffLayer').checked) {
+        loadGeoTIFF(area);
+      }
+      
+      setTimeout(() => {
+        document.getElementById('loadArea').disabled = false;
+      }, 1000);
     }
 
-    // Load default area on startup
-    loadAreaData('urban');
+    // Load default area on startup with error handling
+    try {
+      loadGeoJSON('urban');
+      // Don't load GeoTIFF on initial load to reduce chance of crash
+      document.getElementById('geotiffLayer').checked = false;
+    } catch (e) {
+      console.error('Error during initial load:', e);
+      showError('Failed to initialize map: ' + e.message);
+    }
 
     // Handle area selection change
     document.getElementById('loadArea').addEventListener('click', function() {
@@ -174,7 +252,10 @@
 
     // Toggle GeoTIFF layer visibility
     document.getElementById('geotiffLayer').addEventListener('change', function(e) {
-      if (geotiffLayer) {
+      if (e.target.checked && !geotiffLayer) {
+        // Load GeoTIFF if it wasn't loaded before
+        loadGeoTIFF(document.getElementById('areaSelector').value);
+      } else if (geotiffLayer) {
         if (e.target.checked) {
           geotiffLayer.addTo(map);
         } else {
