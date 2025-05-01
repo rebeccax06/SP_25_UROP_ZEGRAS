@@ -38,17 +38,17 @@ This project provides a simple interactive mapping website for a workshop on bic
    cd interactive-mapping-workshop
 
 2. **File Structure Setup**
-    interactive-mapping-workshop/
-    ├── index.html
-    ├── README.md
-    ├── data/
-    │   ├── conveyal_geotiff_spring_2025_all_modifications.geotiff
-    │   ├── conveyal_isochrone_spring_2025_all_modifications_at_60_minutes.json
+    interactive-mapping-workshop/  
+    ├── index.html  
+    ├── README.md  
+    ├── data/  
+    │   ├── conveyal_geotiff_spring_2025_all_modifications.geotiff  
+    │   ├── conveyal_isochrone_spring_2025_all_modifications_at_60_minutes.json  
     data/ holds all the static files
 3. **Run the Application**
     - Using a static server:
-        - With Node.js (http-server)
-        `npm install -g http-server
-        http-server . `
+        - With Node.js (http-server)  
+        `npm install -g http-server  
+        http-server . `  
         Open your browser and navigate to http://localhost:8080.
 

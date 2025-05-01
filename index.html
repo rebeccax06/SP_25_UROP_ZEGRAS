@@ -4,26 +4,21 @@
     <title>Interactive Mapping: Bicycle Accessibility</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Leaflet CSS - Required for styling the map and its controls -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <!-- Leaflet JS - The core mapping library -->
+    <!-- Leaflet & GeoRaster JS -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <!-- GeoRaster - Library for parsing GeoTIFF files -->
     <script src="https://unpkg.com/georaster"></script>
-    <!-- GeoRaster Layer - Creates Leaflet layers from GeoTIFF data -->
     <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <!-- Your CSS -->
     <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
-    <!-- main map container -->
     <div id="map"></div>
-    <!-- Control sidebar -->
     <div class="sidebar">
       <h3>Bicycle Accessibility</h3>
-
       <br />
 
-      <!-- Area selection controls -->
       <label for="areaSelector">Select Area:</label>
       <select id="areaSelector">
         <option value="boston">Boston (urban)</option>
@@ -34,212 +29,180 @@
 
       <hr />
 
-      <!-- Isochrone checkboxes with colors -->
       <strong>Show Isochrones:</strong><br />
       <div class="isochrone-controls">
-        <label>
-          <input type="checkbox" class="iso-checkbox" data-minutes="10" />
-          <span
-            class="color-indicator"
-            style="background-color: #bdd7e7"
-          ></span>
-          10 min </label
-        ><br />
 
-        <label>
-          <input
-            type="checkbox"
-            class="iso-checkbox"
-            data-minutes="20"
-            checked
-          />
-          <span
-            class="color-indicator"
-            style="background-color: #fee6ce""
-          ></span>
-          20 min </label
-        ><br />
+        <!-- 10 min block -->
+        <div class="iso-block">
+          <label>
+            <input type="checkbox" class="iso-checkbox" data-minutes="10" />
+            <span class="color-indicator" style="background-color:#bdd7e7;"></span>
+            10 min
+          </label><br/>
+          <div class="lts-minute-controls" data-minutes="10">
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="10" data-lts="1" />
+              <span class="line-indicator lts1"></span> LTS 1
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="10" data-lts="2" />
+              <span class="line-indicator lts2"></span> LTS 2
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="10" data-lts="3" />
+              <span class="line-indicator lts3"></span> LTS 3
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="10" data-lts="4" />
+              <span class="line-indicator lts4"></span> LTS 4
+            </label>
+          </div>
+        </div>
 
-        <label>
-          <input type="checkbox" class="iso-checkbox" data-minutes="30" />
-          <span
-            class="color-indicator"
-            style="background-color: #c7e9c0;"
-          ></span>
-          30 min </label
-        ><br />
-      
+        <!-- 20 min block -->
+        <div class="iso-block">
+          <label>
+            <input type="checkbox" class="iso-checkbox" data-minutes="20" checked />
+            <span class="color-indicator" style="background-color:#fee6ce;"></span>
+            20 min
+          </label><br/>
+          <div class="lts-minute-controls" data-minutes="20">
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="20" data-lts="1" />
+              <span class="line-indicator lts1"></span> LTS 1
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="20" data-lts="2" />
+              <span class="line-indicator lts2"></span> LTS 2
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="20" data-lts="3" />
+              <span class="line-indicator lts3"></span> LTS 3
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="20" data-lts="4" />
+              <span class="line-indicator lts4"></span> LTS 4
+            </label>
+          </div>
+        </div>
+
+        <!-- 30 min block -->
+        <div class="iso-block">
+          <label>
+            <input type="checkbox" class="iso-checkbox" data-minutes="30" />
+            <span class="color-indicator" style="background-color:#c7e9c0;"></span>
+            30 min
+          </label><br/>
+          <div class="lts-minute-controls" data-minutes="30">
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="30" data-lts="1" />
+              <span class="line-indicator lts1"></span> LTS 1
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="30" data-lts="2" />
+              <span class="line-indicator lts2"></span> LTS 2
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="30" data-lts="3" />
+              <span class="line-indicator lts3"></span> LTS 3
+            </label>
+            <label>
+              <input type="checkbox" class="lts-minute-checkbox" data-minutes="30" data-lts="4" />
+              <span class="line-indicator lts4"></span> LTS 4
+            </label>
+          </div>
+        </div>
+
       </div>
 
       <hr />
-      <strong>Show LTS Levels:</strong><br />
-      <div class="lts-controls">
-        <label>
-          <input type="checkbox" class="lts-checkbox" data-lts="1" />
-          <span class="line-indicator lts1"></span>
-          LTS 1 </label
-        ><br />
-        <label>
-          <input type="checkbox" class="lts-checkbox" data-lts="2" />
-          <span class="line-indicator lts2"></span>
-          LTS 2 </label
-        ><br />
-        <label>
-          <input type="checkbox" class="lts-checkbox" data-lts="3" />
-          <span class="line-indicator lts3"></span>
-          LTS 3 </label
-        ><br />
-        <label>
-          <input type="checkbox" class="lts-checkbox" data-lts="4" />
-          <span class="line-indicator lts4"></span>
-          LTS 4 </label
-        ><br />
-      </div>
-      <!-- Minute slider control -->
-      <!-- <div class="slider-container">
-      <label for="minuteRange">Travel Time:</label><br>
-      <input type="range" id="minuteRange" min="10" max="60" step="10" value="20" style="width: 80%;">
-      <span id="minuteValue">20</span> minutes
-    </div> -->
 
       <button id="loadArea">Load Area</button>
       <div id="loading" class="loading">Loading data...</div>
       <div id="errorMessage" class="error-message"></div>
-      <div
-        id="currentFile"
-        style="font-size: 0.8em; margin-top: 10px; word-break: break-all"
-      ></div>
+      <div id="currentFile" style="font-size:0.8em; margin-top:10px; word-break:break-all;"></div>
     </div>
 
     <script>
-      // 1) Map setup (unchanged)
+      // 1) Map setup
       var map = L.map("map").setView([42.3601, -71.0589], 13);
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap contributors",
-        }
-      ).addTo(map);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(map);
 
-      // 2) Styling maps
+      // 2) Styles
       var isoStyles = {
-        10: {
-          // a rich blue
-          color: "#08519c",
-          fillColor: "#bdd7e7",
-          weight: 2,
-          fillOpacity: 0.5,
-        },
-        20: {
-          // a vivid orange
-          color: "#d94801",
-          fillColor: "#fee6ce",
-          weight: 2,
-          fillOpacity: 0.5,
-        },
-        30: {
-          // a bright green
-          color: "#238b45",
-          fillColor: "#c7e9c0",
-          weight: 2,
-          fillOpacity: 0.5,
-        },
+        10: { color:"#08519c", fillColor:"#bdd7e7", weight:2, fillOpacity:0.5 },
+        20: { color:"#d94801", fillColor:"#fee6ce", weight:2, fillOpacity:0.5 },
+        30: { color:"#238b45", fillColor:"#c7e9c0", weight:2, fillOpacity:0.5 }
       };
       var ltsStyles = {
-        1: { color:'#1b9e77', weight:3, dashArray:null    },
-  2: { color:'#d95f02', weight:3, dashArray:'6,4'   },
-  3: { color:'#7570b3', weight:3, dashArray:'1,5'   },
-  4: { color:'#e7298a', weight:3, dashArray:'10,4,2,4' },
+        1: { color:"#1b9e77", weight:3, dashArray:null    },
+        2: { color:"#d95f02", weight:3, dashArray:"6,4"   },
+        3: { color:"#7570b3", weight:3, dashArray:"1,5"   },
+        4: { color:"#e7298a", weight:3, dashArray:"10,4,2,4" }
       };
 
-      // 3) Hold onto layers so we can clear them
+      // 3) Layer management
       var activeLayers = [];
-
-      // 4) Utility to clear all previous GeoJSON layers
       function clearLayers() {
-        activeLayers.forEach((l) => map.removeLayer(l));
+        activeLayers.forEach(l => map.removeLayer(l));
         activeLayers = [];
       }
-
-      // 5) Utility to fetch+add one GeoJSON file
       function fetchAndAdd(url, style) {
         return fetch(url)
-          .then((r) => {
-            if (!r.ok) throw new Error(r.status + " " + r.statusText);
-            return r.json();
-          })
-          .then((json) => {
+          .then(r => { if(!r.ok) throw new Error(r.statusText); return r.json(); })
+          .then(json => {
             var layer = L.geoJSON(json, { style: style }).addTo(map);
             activeLayers.push(layer);
-            // fit to bounds of the very first layer
-            if (activeLayers.length === 1) {
-              map.fitBounds(layer.getBounds());
-            }
+            if(activeLayers.length===1) map.fitBounds(layer.getBounds());
           })
-          .catch((err) => {
-            console.error("Load error", url, err);
-          });
+          .catch(err => console.error("Load error",url,err));
       }
 
-      // 6) Main loader: runs on button click
-      document
-        .getElementById("loadArea")
-        .addEventListener("click", function () {
-          var area = document.getElementById("areaSelector").value;
+      // 4) Show/hide per-minute LTS pickers
+      document.querySelectorAll('.iso-checkbox').forEach(cb => {
+        function togglePicker() {
+          var m = cb.dataset.minutes;
+          var picker = document.querySelector(`.lts-minute-controls[data-minutes="${m}"]`);
+          picker.style.display = cb.checked ? 'block' : 'none';
+          if(!cb.checked) picker.querySelectorAll('input').forEach(c => c.checked=false);
+        }
+        cb.addEventListener('change', togglePicker);
+        togglePicker();
+      });
 
-          // 6a) clear old layers
-          clearLayers();
+      // 5) Main loader
+      document.getElementById('loadArea').addEventListener('click', () => {
+        clearLayers();
+        var area   = document.getElementById('areaSelector').value;
+        var prefix = area;  y
 
-          // 6b) collect checked minutes & LTS levels
-          var minutesArr = Array.from(
-            document.querySelectorAll(".iso-checkbox:checked")
-          ).map((cb) => cb.getAttribute("data-minutes"));
+        // selected minutes
+        var mins = Array.from(document.querySelectorAll('.iso-checkbox:checked'))
+                      .map(cb=>cb.dataset.minutes);
 
-          var ltsArr = Array.from(
-            document.querySelectorAll(".lts-checkbox:checked")
-          ).map((cb) => cb.getAttribute("data-lts"));
+        mins.forEach(minutes => {
+          // 5a) base isochrone
+        
+          var isoFile = `./data/${prefix}_at_${minutes}_minutes.json`;
+          fetchAndAdd(isoFile, isoStyles[minutes]);
+          
+          // 5b) its own LTS overlays
+          var ltsFor = Array.from(
+            document.querySelectorAll(`.lts-minute-checkbox[data-minutes="${minutes}"]:checked`)
+          ).map(cb=>cb.dataset.lts);
 
-          // 6c) determine filename prefix based on area
-          function areaPrefix() {
-            if (area === "boston") {
-              console.log(area);
-              return "boston";
-            } else if (area === "mattapan") {
-              return "mattapan";
-            } else if (area === "southwest_corridor") {
-              return "conveyal_isochrone_spring_2025_all_modifications";
-            } else if (area === "roxburycc") {
-              return "roxburycc";
-            }
-          }
-
-          var prefix = areaPrefix();
-
-          // 6d) loop minute × LTS (if any), otherwise just minute alone
-          minutesArr.forEach((minutes) => {
-            if (ltsArr.length > 0) {
-              // for each selected LTS
-              // ltsArr.forEach((lts) => {
-              //   var fileName = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
-              //   fetchAndAdd(fileName, isoStyles[minutes]);
-              // });
-              ltsArr.forEach((lts) => {
-                var fileName = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
-                fetchAndAdd(fileName, ltsStyles[lts]);
-              });
-            } else {
-              // no LTS filter → old behaviour_default lts2
-              var fileName = `./data/${prefix}_at_${minutes}_minutes_lts2.json`;
-              fetchAndAdd(fileName, isoStyles[minutes]);
-            }
+          ltsFor.forEach(lts => {
+            var ltsFile = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
+            fetchAndAdd(ltsFile, () => ltsStyles[lts]);
           });
         });
-
-      // 7) optional: auto-load on startup
-      window.addEventListener("load", () => {
-        document.getElementById("loadArea").click();
       });
+
+      // 6) Auto‐load on start
+      window.addEventListener('load', () => document.getElementById('loadArea').click());
     </script>
   </body>
 </html>
