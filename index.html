@@ -1,291 +1,242 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Interactive Mapping: Bicycle Accessibility</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Leaflet CSS - Required for styling the map and its controls -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Leaflet JS - The core mapping library -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- GeoRaster - Library for parsing GeoTIFF files -->
-  <script src="https://unpkg.com/georaster"></script>
-  <!-- GeoRaster Layer - Creates Leaflet layers from GeoTIFF data -->
-  <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
-  <link rel = "stylesheet" href = "./index.css">
-</head>
-<body>
-  <!-- main map container -->
-  <div id="map"></div>
-  <!-- Control sidebar -->
-  <div class="sidebar">
-    <h3>Bicycle Accessibility</h3>
-    
-    <br>
-  
-    <!-- Area selection controls -->
-    <label for="areaSelector">Select Area:</label>
-    <select id="areaSelector">
-      <option value="boston">Boston (urban)</option>
-      <option value="residential">Residential Neighborhood</option>
-      <option value="southwest_corridor">Southwest Corridor</option>
-    </select>
+  <head>
+    <title>Interactive Mapping: Bicycle Accessibility</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Leaflet CSS - Required for styling the map and its controls -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet JS - The core mapping library -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- GeoRaster - Library for parsing GeoTIFF files -->
+    <script src="https://unpkg.com/georaster"></script>
+    <!-- GeoRaster Layer - Creates Leaflet layers from GeoTIFF data -->
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <!-- main map container -->
+    <div id="map"></div>
+    <!-- Control sidebar -->
+    <div class="sidebar">
+      <h3>Bicycle Accessibility</h3>
 
-    <hr>
+      <br />
 
-    <!-- Isochrone checkboxes with colors -->
-    <strong>Show Isochrones:</strong><br>
-    <div class="isochrone-controls">
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="10">
-        <span class="color-indicator" style="background-color: #a6cee3;"></span>
-        10 min
-      </label><br>
-      
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="20" checked>
-        <span class="color-indicator" style="background-color: #b2df8a;"></span>
-        20 min
-      </label><br>
-      
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="30">
-        <span class="color-indicator" style="background-color: #fb9a99;"></span>
-        30 min
-      </label><br>
-<!--       
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="40">
-        <span class="color-indicator" style="background-color: #fdbf6f;"></span>
-        40 min
-      </label><br>
-      
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="50">
-        <span class="color-indicator" style="background-color: #cab2d6;"></span>
-        50 min
-      </label><br>
-      
-      <label>
-        <input type="checkbox" class="iso-checkbox" data-minutes="60">
-        <span class="color-indicator" style="background-color: #ffff99;"></span>
-        60 min
-      </label> -->
-    </div>
+      <!-- Area selection controls -->
+      <label for="areaSelector">Select Area:</label>
+      <select id="areaSelector">
+        <option value="boston">Boston (urban)</option>
+        <option value="residential">Residential Neighborhood</option>
+        <option value="southwest_corridor">Southwest Corridor</option>
+      </select>
 
-    <hr>
-    <strong>Show LTS Levels:</strong><br>
-    <div class="lts-controls">
-      <label>
-        <input type="checkbox" class="lts-checkbox" data-lts="1">
-        <span class="line-indicator lts1"></span>
-        LTS 1
-      </label><br>
-      <label>
-        <input type="checkbox" class="lts-checkbox" data-lts="2">
-        <span class="line-indicator lts2"></span>
-        LTS 2
-      </label><br>
-      <label>
-        <input type="checkbox" class="lts-checkbox" data-lts="3">
-        <span class="line-indicator lts3"></span>
-        LTS 3
-      </label><br>
-      <label>
-        <input type="checkbox" class="lts-checkbox" data-lts="4">
-        <span class="line-indicator lts4"></span>
-        LTS 4
-      </label><br>
-    </div>
-    <!-- Minute slider control -->
-    <!-- <div class="slider-container">
+      <hr />
+
+      <!-- Isochrone checkboxes with colors -->
+      <strong>Show Isochrones:</strong><br />
+      <div class="isochrone-controls">
+        <label>
+          <input type="checkbox" class="iso-checkbox" data-minutes="10" />
+          <span
+            class="color-indicator"
+            style="background-color: #bdd7e7"
+          ></span>
+          10 min </label
+        ><br />
+
+        <label>
+          <input
+            type="checkbox"
+            class="iso-checkbox"
+            data-minutes="20"
+            checked
+          />
+          <span
+            class="color-indicator"
+            style="background-color: #fee6ce""
+          ></span>
+          20 min </label
+        ><br />
+
+        <label>
+          <input type="checkbox" class="iso-checkbox" data-minutes="30" />
+          <span
+            class="color-indicator"
+            style="background-color: #c7e9c0;"
+          ></span>
+          30 min </label
+        ><br />
+      
+      </div>
+
+      <hr />
+      <strong>Show LTS Levels:</strong><br />
+      <div class="lts-controls">
+        <label>
+          <input type="checkbox" class="lts-checkbox" data-lts="1" />
+          <span class="line-indicator lts1"></span>
+          LTS 1 </label
+        ><br />
+        <label>
+          <input type="checkbox" class="lts-checkbox" data-lts="2" />
+          <span class="line-indicator lts2"></span>
+          LTS 2 </label
+        ><br />
+        <label>
+          <input type="checkbox" class="lts-checkbox" data-lts="3" />
+          <span class="line-indicator lts3"></span>
+          LTS 3 </label
+        ><br />
+        <label>
+          <input type="checkbox" class="lts-checkbox" data-lts="4" />
+          <span class="line-indicator lts4"></span>
+          LTS 4 </label
+        ><br />
+      </div>
+      <!-- Minute slider control -->
+      <!-- <div class="slider-container">
       <label for="minuteRange">Travel Time:</label><br>
       <input type="range" id="minuteRange" min="10" max="60" step="10" value="20" style="width: 80%;">
       <span id="minuteValue">20</span> minutes
     </div> -->
-    
-    <button id="loadArea">Load Area</button>
-    <div id="loading" class="loading">Loading data...</div>
-    <div id="errorMessage" class="error-message"></div>
-    <div id="currentFile" style="font-size: 0.8em; margin-top: 10px; word-break: break-all;"></div>
-  </div>
 
-  <script>
-    
-    // Initialize the map centered on a default location (Boston, MA)
-    var map = L.map('map').setView([42.3601, -71.0589], 13);
+      <button id="loadArea">Load Area</button>
+      <div id="loading" class="loading">Loading data...</div>
+      <div id="errorMessage" class="error-message"></div>
+      <div
+        id="currentFile"
+        style="font-size: 0.8em; margin-top: 10px; word-break: break-all"
+      ></div>
+    </div>
 
-    // Add OpenStreetMap base layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }).addTo(map);
+    <script>
+      // 1) Map setup (unchanged)
+      var map = L.map("map").setView([42.3601, -71.0589], 13);
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap contributors",
+        }
+      ).addTo(map);
 
-    // Global variables to hold our layers
-    
-    var loadingEl = document.getElementById('loading');
-    var errorEl   = document.getElementById('errorMessage');
-    var fileEl    = document.getElementById('currentFile');
-    var isoLayers = {};  // minute -> layer
-    // color mapping for each isochrone
-    var isoStyles = {
-      10: { color: '#1f78b4', fillColor: '#a6cee3', weight: 2, fillOpacity: 0.5 },
-      20: { color: '#33a02c', fillColor: '#b2df8a', weight: 2, fillOpacity: 0.5 },
-      30: { color: '#e31a1c', fillColor: '#fb9a99', weight: 2, fillOpacity: 0.5 },
-      //40: { color: '#ff7f00', fillColor: '#fdbf6f', weight: 2, fillOpacity: 0.5 },
-      //50: { color: '#6a3d9a', fillColor: '#cab2d6', weight: 2, fillOpacity: 0.5 },
-      //60: { color: '#b15928', fillColor: '#ffff99', weight: 2, fillOpacity: 0.5 }
-    };
-    const ltsLayers = {};   // store LTS GeoJSON layers by level
-    const ltsStyles = {
-      1: { color: '#2ca02c', weight: 3 },
-      2: { color: '#1f77b4', weight: 3 },
-      3: { color: '#ff7f0e', weight: 3 },
-      4: { color: '#d62728', weight: 3 }
-    };
-    var loadingElement = document.getElementById('loading');
-    var errorMessageElement = document.getElementById('errorMessage');
-    var currentFileDisplay = document.getElementById('currentFile');
+      // 2) Styling maps
+      var isoStyles = {
+        10: {
+          // a rich blue
+          color: "#08519c",
+          fillColor: "#bdd7e7",
+          weight: 2,
+          fillOpacity: 0.5,
+        },
+        20: {
+          // a vivid orange
+          color: "#d94801",
+          fillColor: "#fee6ce",
+          weight: 2,
+          fillOpacity: 0.5,
+        },
+        30: {
+          // a bright green
+          color: "#238b45",
+          fillColor: "#c7e9c0",
+          weight: 2,
+          fillOpacity: 0.5,
+        },
+      };
+      var ltsStyles = {
+        1: { color:'#1b9e77', weight:3, dashArray:null    },
+  2: { color:'#d95f02', weight:3, dashArray:'6,4'   },
+  3: { color:'#7570b3', weight:3, dashArray:'1,5'   },
+  4: { color:'#e7298a', weight:3, dashArray:'10,4,2,4' },
+      };
 
-  
+      // 3) Hold onto layers so we can clear them
+      var activeLayers = [];
 
-    // Function to show error message
-    function showError(message) {
-      errorMessageElement.textContent = message;
-      loadingElement.style.display = 'none';
-    }
-
-    // Function to clear error message
-    function clearError() {
-      errorMessageElement.textContent = '';
-    }
-
-    // Function to load an isochrone layer
-    function loadIsochrone(area, minutes) {
-      // Remove existing layer for these minutes if it exists
-      if (isoLayers[minutes]) {
-        map.removeLayer(isoLayers[minutes]);
-        delete isoLayers[minutes];
+      // 4) Utility to clear all previous GeoJSON layers
+      function clearLayers() {
+        activeLayers.forEach((l) => map.removeLayer(l));
+        activeLayers = [];
       }
-      
-      var fileName;
-      // Generate filename based on the area and minutes
-      if (area === 'boston') {
-        fileName = './data/conveyal_isochrone_testing_for_urop_no_modifications_baseline_at_' + minutes + '_minutes.json';
-      } else if (area === 'residential') {
-        fileName = './data/isochrone_testing_no_modifications_baseline_mattapan_at_' + minutes + '_minutes.json';
-      } else if (area === 'southwest_corridor') {
-        fileName = './data/conveyal_isochrone_spring_2025_all_modifications_at_' + minutes + '_minutes.json';
-      }
-      
-      var url = fileName;
-      
-      // Update loading status
-      fileEl.textContent = "Loading: " + fileName;
-      loadingEl.style.display = 'block';
-      
-      fetch(url)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load GeoJSON (${response.status} ${response.statusText})`);
-          }
-          clearError();
-          return response.json();
-        })
-        .then(data => {
-          // Create the layer with appropriate styling
-          isoLayers[minutes] = L.geoJSON(data, {
-            style: isoStyles[minutes],
-            onEachFeature: function(feature, layer) {
-              var popupContent = `${minutes} minute travel time`;
-              if (feature.properties && feature.properties.name) {
-                popupContent = feature.properties.name;
-              }
-              layer.bindPopup(popupContent);
+
+      // 5) Utility to fetch+add one GeoJSON file
+      function fetchAndAdd(url, style) {
+        return fetch(url)
+          .then((r) => {
+            if (!r.ok) throw new Error(r.status + " " + r.statusText);
+            return r.json();
+          })
+          .then((json) => {
+            var layer = L.geoJSON(json, { style: style }).addTo(map);
+            activeLayers.push(layer);
+            // fit to bounds of the very first layer
+            if (activeLayers.length === 1) {
+              map.fitBounds(layer.getBounds());
             }
-          }).addTo(map);
-          
-          // Fit map to bounds of the first layer loaded
-          if (Object.keys(isoLayers).length === 1) {
-            map.fitBounds(isoLayers[minutes].getBounds());
-            clearError();
+          })
+          .catch((err) => {
+            console.error("Load error", url, err);
+          });
+      }
+
+      // 6) Main loader: runs on button click
+      document
+        .getElementById("loadArea")
+        .addEventListener("click", function () {
+          var area = document.getElementById("areaSelector").value;
+
+          // 6a) clear old layers
+          clearLayers();
+
+          // 6b) collect checked minutes & LTS levels
+          var minutesArr = Array.from(
+            document.querySelectorAll(".iso-checkbox:checked")
+          ).map((cb) => cb.getAttribute("data-minutes"));
+
+          var ltsArr = Array.from(
+            document.querySelectorAll(".lts-checkbox:checked")
+          ).map((cb) => cb.getAttribute("data-lts"));
+
+          // 6c) determine filename prefix based on area
+          function areaPrefix() {
+            if (area === "boston") {
+              console.log(area);
+              return "boston";
+            } else if (area === "residential") {
+              return "isochrone_testing_no_modifications_baseline_mattapan";
+            } else if (area === "southwest_corridor") {
+              return "conveyal_isochrone_spring_2025_all_modifications";
+            }
           }
-          
-          loadingEl.style.display = 'none';
-          fileEl.textContent = "Loaded: " + fileName;
-        })
-        .catch(error => {
-          console.error('Error loading GeoJSON:', error);
-          showError('Error loading GeoJSON: ' + error.message);
-          loadingEl.style.display = 'none';
+
+          var prefix = areaPrefix();
+
+          // 6d) loop minute × LTS (if any), otherwise just minute alone
+          minutesArr.forEach((minutes) => {
+            if (ltsArr.length > 0) {
+              // for each selected LTS
+              // ltsArr.forEach((lts) => {
+              //   var fileName = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
+              //   fetchAndAdd(fileName, isoStyles[minutes]);
+              // });
+              ltsArr.forEach((lts) => {
+                var fileName = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
+                fetchAndAdd(fileName, ltsStyles[lts]);
+              });
+            } else {
+              // no LTS filter → old behaviour_default lts2
+              var fileName = `./data/${prefix}_at_${minutes}_minutes_lts2.json`;
+              fetchAndAdd(fileName, isoStyles[minutes]);
+            }
+          });
         });
-    }
 
-    // Handle checkbox change
-    document.querySelectorAll('.iso-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        var minutes = this.getAttribute('data-minutes');
-        var area = document.getElementById('areaSelector').value;
-        
-        if (this.checked) {
-          loadIsochrone(area, minutes);
-        } else if (isoLayers[minutes]) {
-          map.removeLayer(isoLayers[minutes]);
-          delete isoLayers[minutes];
-        }
+      // 7) optional: auto-load on startup
+      window.addEventListener("load", () => {
+        document.getElementById("loadArea").click();
       });
-    });
-
-    // Handle load button click - reload all checked isochrones
-    document.getElementById('loadArea').addEventListener('click', function() {
-      var area = document.getElementById('areaSelector').value;
-      
-      // Clear all existing layers
-      // Object.keys(isoLayers).forEach(function(key) {
-      //   map.removeLayer(isoLayers[key]);
-      //   delete isoLayers[key];
-      // });
-      Object.values(isoLayers).forEach(l => map.removeLayer(l))
-      isoLayers = {};
-      Object.values(ltsLayers).forEach(l => map.removeLayer(l));
-      ltsLayers = {};
-      
-      // Load all checked isochrones
-      document.querySelectorAll('.iso-checkbox:checked').forEach(function(checkbox) {
-        loadIsochrone(area, checkbox.getAttribute('data-minutes'));
-      });
-    });
-
-    // Initial load of checked isochrones
-    window.addEventListener('load', function() {
-      var area = document.getElementById('areaSelector').value;
-      document.querySelectorAll('.iso-checkbox:checked').forEach(function(checkbox) {
-        loadIsochrone(area, checkbox.getAttribute('data-minutes'));
-      });
-    });
-
-    
-    // toggle LTS layer on checkbox change
-    document.querySelectorAll('.lts-checkbox').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const lvl = cb.getAttribute('data-lts');
-        if (cb.checked) {
-          // load LTS GeoJSON for this level (you'll need to set the correct URL)
-          fetch(`./data/lts_level_${lvl}.geojson`)
-            .then(r => r.json())
-            .then(json => {
-              ltsLayers[lvl] = L.geoJSON(json, {
-                style: () => ltsStyles[lvl]
-              }).addTo(map);
-            })
-            .catch(console.error);
-        } else if (ltsLayers[lvl]) {
-          map.removeLayer(ltsLayers[lvl]);
-          delete ltsLayers[lvl];
-        }
-      });
-    });
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
