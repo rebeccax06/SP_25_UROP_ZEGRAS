@@ -12,67 +12,108 @@
   <script src="https://unpkg.com/georaster"></script>
   <!-- GeoRaster Layer - Creates Leaflet layers from GeoTIFF data -->
   <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
-  <style>
-    body { margin: 0; padding: 0; }
-    #map { height: 100vh; }
-    /* Sidebar styling for controls */
-    .sidebar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: white;
-      padding: 10px;
-      z-index: 1000;
-      border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-family: sans-serif;
-      max-width: 250px;
-    }
-    .sidebar h3 {
-      margin-top: 0;
-    }
-    .error-message {
-      color: red;
-      font-weight: bold;
-    }
-    .loading {
-      display: none;
-      margin-top: 10px;
-    }
-  </style>
+  <link rel = "stylesheet" href = "./index.css">
 </head>
 <body>
   <!-- main map container -->
   <div id="map"></div>
   <!-- Control sidebar -->
   <div class="sidebar">
-    <h3>Map Layers</h3>
-    <!-- Layer toggle controls -->
-    <label>
-      <input type="checkbox" id="geojsonLayer" checked>
-      Show GeoJSON Layer
-    </label>
+    <h3>Bicycle Accessibility</h3>
+    
     <br>
-    <label>
-      <input type="checkbox" id="geotiffLayer" checked>
-      Show GeoTIFF Layer
-    </label>
-    <hr>
-     <!-- Area selection controls -->
+  
+    <!-- Area selection controls -->
     <label for="areaSelector">Select Area:</label>
     <select id="areaSelector">
-      <option value="urban">Urban Core</option>
+      <option value="boston">Boston (urban)</option>
       <option value="residential">Residential Neighborhood</option>
-      <option value="suburban">Suburban Area</option>
+      <option value="southwest_corridor">Southwest Corridor</option>
     </select>
+
+    <hr>
+
+    <!-- Isochrone checkboxes with colors -->
+    <strong>Show Isochrones:</strong><br>
+    <div class="isochrone-controls">
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="10">
+        <span class="color-indicator" style="background-color: #a6cee3;"></span>
+        10 min
+      </label><br>
+      
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="20" checked>
+        <span class="color-indicator" style="background-color: #b2df8a;"></span>
+        20 min
+      </label><br>
+      
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="30">
+        <span class="color-indicator" style="background-color: #fb9a99;"></span>
+        30 min
+      </label><br>
+<!--       
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="40">
+        <span class="color-indicator" style="background-color: #fdbf6f;"></span>
+        40 min
+      </label><br>
+      
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="50">
+        <span class="color-indicator" style="background-color: #cab2d6;"></span>
+        50 min
+      </label><br>
+      
+      <label>
+        <input type="checkbox" class="iso-checkbox" data-minutes="60">
+        <span class="color-indicator" style="background-color: #ffff99;"></span>
+        60 min
+      </label> -->
+    </div>
+
+    <hr>
+    <strong>Show LTS Levels:</strong><br>
+    <div class="lts-controls">
+      <label>
+        <input type="checkbox" class="lts-checkbox" data-lts="1">
+        <span class="line-indicator lts1"></span>
+        LTS 1
+      </label><br>
+      <label>
+        <input type="checkbox" class="lts-checkbox" data-lts="2">
+        <span class="line-indicator lts2"></span>
+        LTS 2
+      </label><br>
+      <label>
+        <input type="checkbox" class="lts-checkbox" data-lts="3">
+        <span class="line-indicator lts3"></span>
+        LTS 3
+      </label><br>
+      <label>
+        <input type="checkbox" class="lts-checkbox" data-lts="4">
+        <span class="line-indicator lts4"></span>
+        LTS 4
+      </label><br>
+    </div>
+    <!-- Minute slider control -->
+    <!-- <div class="slider-container">
+      <label for="minuteRange">Travel Time:</label><br>
+      <input type="range" id="minuteRange" min="10" max="60" step="10" value="20" style="width: 80%;">
+      <span id="minuteValue">20</span> minutes
+    </div> -->
+    
     <button id="loadArea">Load Area</button>
     <div id="loading" class="loading">Loading data...</div>
     <div id="errorMessage" class="error-message"></div>
+    <div id="currentFile" style="font-size: 0.8em; margin-top: 10px; word-break: break-all;"></div>
   </div>
-  
+
   <script>
-    // Initialize the map centered on a default location (e.g., New York City)
-    var map = L.map('map').setView([40.7128, -74.0060], 13);
+    
+    // Initialize the map centered on a default location (Boston, MA)
+    var map = L.map('map').setView([42.3601, -71.0589], 13);
 
     // Add OpenStreetMap base layer
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -81,9 +122,32 @@
     }).addTo(map);
 
     // Global variables to hold our layers
-    var geojsonLayer, geotiffLayer;
+    
+    var loadingEl = document.getElementById('loading');
+    var errorEl   = document.getElementById('errorMessage');
+    var fileEl    = document.getElementById('currentFile');
+    var isoLayers = {};  // minute -> layer
+    // color mapping for each isochrone
+    var isoStyles = {
+      10: { color: '#1f78b4', fillColor: '#a6cee3', weight: 2, fillOpacity: 0.5 },
+      20: { color: '#33a02c', fillColor: '#b2df8a', weight: 2, fillOpacity: 0.5 },
+      30: { color: '#e31a1c', fillColor: '#fb9a99', weight: 2, fillOpacity: 0.5 },
+      //40: { color: '#ff7f00', fillColor: '#fdbf6f', weight: 2, fillOpacity: 0.5 },
+      //50: { color: '#6a3d9a', fillColor: '#cab2d6', weight: 2, fillOpacity: 0.5 },
+      //60: { color: '#b15928', fillColor: '#ffff99', weight: 2, fillOpacity: 0.5 }
+    };
+    const ltsLayers = {};   // store LTS GeoJSON layers by level
+    const ltsStyles = {
+      1: { color: '#2ca02c', weight: 3 },
+      2: { color: '#1f77b4', weight: 3 },
+      3: { color: '#ff7f0e', weight: 3 },
+      4: { color: '#d62728', weight: 3 }
+    };
     var loadingElement = document.getElementById('loading');
     var errorMessageElement = document.getElementById('errorMessage');
+    var currentFileDisplay = document.getElementById('currentFile');
+
+  
 
     // Function to show error message
     function showError(message) {
@@ -96,173 +160,132 @@
       errorMessageElement.textContent = '';
     }
 
-    // Function to load GeoJSON based on selected area
-    function loadGeoJSON(area) {
-      if (geojsonLayer) { 
-        map.removeLayer(geojsonLayer); 
+    // Function to load an isochrone layer
+    function loadIsochrone(area, minutes) {
+      // Remove existing layer for these minutes if it exists
+      if (isoLayers[minutes]) {
+        map.removeLayer(isoLayers[minutes]);
+        delete isoLayers[minutes];
       }
       
-      var url;
-      // Select GeoJSON file URL based on the area
-      if (area === 'urban') {
-        url = 'data/conveyal_isochrone_testing_for_urop_no_modifications_baseline_at_20_minutes.json';
+      var fileName;
+      // Generate filename based on the area and minutes
+      if (area === 'boston') {
+        fileName = './data/conveyal_isochrone_testing_for_urop_no_modifications_baseline_at_' + minutes + '_minutes.json';
       } else if (area === 'residential') {
-        url = 'data/isochrone_testing_no_modifications_baseline_mattapan.json';
-      } else if (area === 'suburban') {
-        url = 'data/isochrone_testing_no_modifications_baseline_mattapan.json';
+        fileName = './data/isochrone_testing_no_modifications_baseline_mattapan_at_' + minutes + '_minutes.json';
+      } else if (area === 'southwest_corridor') {
+        fileName = './data/conveyal_isochrone_spring_2025_all_modifications_at_' + minutes + '_minutes.json';
       }
       
-      clearError();
-      loadingElement.style.display = 'block';
+      var url = fileName;
+      
+      // Update loading status
+      fileEl.textContent = "Loading: " + fileName;
+      loadingEl.style.display = 'block';
       
       fetch(url)
         .then(response => {
           if (!response.ok) {
             throw new Error(`Failed to load GeoJSON (${response.status} ${response.statusText})`);
           }
+          clearError();
           return response.json();
         })
         .then(data => {
-          geojsonLayer = L.geoJSON(data, {
-            style: {
-              color: 'blue',
-              weight: 2,
-              opacity: 0.6
-            },
+          // Create the layer with appropriate styling
+          isoLayers[minutes] = L.geoJSON(data, {
+            style: isoStyles[minutes],
             onEachFeature: function(feature, layer) {
+              var popupContent = `${minutes} minute travel time`;
               if (feature.properties && feature.properties.name) {
-                layer.bindPopup(feature.properties.name);
+                popupContent = feature.properties.name;
               }
+              layer.bindPopup(popupContent);
             }
           }).addTo(map);
-          map.fitBounds(geojsonLayer.getBounds());
-          loadingElement.style.display = 'none';
+          
+          // Fit map to bounds of the first layer loaded
+          if (Object.keys(isoLayers).length === 1) {
+            map.fitBounds(isoLayers[minutes].getBounds());
+            clearError();
+          }
+          
+          loadingEl.style.display = 'none';
+          fileEl.textContent = "Loaded: " + fileName;
         })
         .catch(error => {
           console.error('Error loading GeoJSON:', error);
           showError('Error loading GeoJSON: ' + error.message);
+          loadingEl.style.display = 'none';
         });
     }
 
-    // Function to load GeoTIFF based on selected area
-    function loadGeoTIFF(area) {
-      if (geotiffLayer) { 
-        map.removeLayer(geotiffLayer); 
-      }
-      
-      var url;
-      // Select GeoTIFF file URL based on the area
-      if (area === 'urban') {
-        url = 'data/conveyal_geotiff_testing_for_urop_no_modifications_baseline.geotiff';
-      } else if (area === 'residential') {
-        url = 'data/geotiff_testing_no_modifications_baseline_mattapan.geotiff';
-      } else if (area === 'suburban') {
-        url = 'data/geotiff_testing_no_modifications_baseline_mattapan.geotiff';
-      }
-      
-      clearError();
-      loadingElement.style.display = 'block';
-      
-      // Check if georaster package is available
-      if (typeof parseGeoraster !== 'function') {
-        showError('GeoRaster library not loaded. Check your network connection.');
-        return;
-      }
-      
-      fetch(url)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load GeoTIFF (${response.status} ${response.statusText})`);
-          }
-          return response.arrayBuffer();
-        })
-        .then(arrayBuffer => {
-          // Implement a timeout to prevent browser from hanging
-          return Promise.race([
-            parseGeoraster(arrayBuffer),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('GeoTIFF processing timed out')), 10000)
-            )
-          ]);
-        })
-        .then(georaster => {
-          geotiffLayer = new GeoRasterLayer({
-            georaster: georaster,
-            opacity: 0.7,
-            resolution: 256, // Lower resolution to improve performance
-            pixelValuesToColorFn: function(pixelValue) {
-              if (pixelValue === 0 || pixelValue === null || pixelValue === undefined) return null;
-              // Simplified color function to improve performance
-              var opacity = Math.min(pixelValue / 255, 1);
-              return "rgba(255, 0, 0, " + opacity + ")";
-            }
-          });
-          geotiffLayer.addTo(map);
-          loadingElement.style.display = 'none';
-        })
-        .catch(error => {
-          console.error('Error loading GeoTIFF:', error);
-          showError('Error loading GeoTIFF: ' + error.message);
-          // Load GeoJSON even if GeoTIFF fails
-          document.getElementById('geotiffLayer').checked = false;
-        });
-    }
+    // Handle checkbox change
+    document.querySelectorAll('.iso-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        var minutes = this.getAttribute('data-minutes');
+        var area = document.getElementById('areaSelector').value;
+        
+        if (this.checked) {
+          loadIsochrone(area, minutes);
+        } else if (isoLayers[minutes]) {
+          map.removeLayer(isoLayers[minutes]);
+          delete isoLayers[minutes];
+        }
+      });
+    });
 
-    // Function to load both layers based on the selected area
-    function loadAreaData(area) {
-      document.getElementById('loadArea').disabled = true;
-      loadGeoJSON(area);
-      
-      // Only try to load GeoTIFF if checkbox is checked
-      if (document.getElementById('geotiffLayer').checked) {
-        loadGeoTIFF(area);
-      }
-      
-      setTimeout(() => {
-        document.getElementById('loadArea').disabled = false;
-      }, 1000);
-    }
-
-    // Load default area on startup with error handling
-    try {
-      loadGeoJSON('urban');
-      // Don't load GeoTIFF on initial load to reduce chance of crash
-      document.getElementById('geotiffLayer').checked = false;
-    } catch (e) {
-      console.error('Error during initial load:', e);
-      showError('Failed to initialize map: ' + e.message);
-    }
-
-    // Handle area selection change
+    // Handle load button click - reload all checked isochrones
     document.getElementById('loadArea').addEventListener('click', function() {
       var area = document.getElementById('areaSelector').value;
-      loadAreaData(area);
+      
+      // Clear all existing layers
+      // Object.keys(isoLayers).forEach(function(key) {
+      //   map.removeLayer(isoLayers[key]);
+      //   delete isoLayers[key];
+      // });
+      Object.values(isoLayers).forEach(l => map.removeLayer(l))
+      isoLayers = {};
+      Object.values(ltsLayers).forEach(l => map.removeLayer(l));
+      ltsLayers = {};
+      
+      // Load all checked isochrones
+      document.querySelectorAll('.iso-checkbox:checked').forEach(function(checkbox) {
+        loadIsochrone(area, checkbox.getAttribute('data-minutes'));
+      });
     });
 
-    // Toggle GeoJSON layer visibility
-    document.getElementById('geojsonLayer').addEventListener('change', function(e) {
-      if (geojsonLayer) {
-        if (e.target.checked) {
-          geojsonLayer.addTo(map);
-        } else {
-          map.removeLayer(geojsonLayer);
-        }
-      }
+    // Initial load of checked isochrones
+    window.addEventListener('load', function() {
+      var area = document.getElementById('areaSelector').value;
+      document.querySelectorAll('.iso-checkbox:checked').forEach(function(checkbox) {
+        loadIsochrone(area, checkbox.getAttribute('data-minutes'));
+      });
     });
 
-    // Toggle GeoTIFF layer visibility
-    document.getElementById('geotiffLayer').addEventListener('change', function(e) {
-      if (e.target.checked && !geotiffLayer) {
-        // Load GeoTIFF if it wasn't loaded before
-        loadGeoTIFF(document.getElementById('areaSelector').value);
-      } else if (geotiffLayer) {
-        if (e.target.checked) {
-          geotiffLayer.addTo(map);
-        } else {
-          map.removeLayer(geotiffLayer);
+    
+    // toggle LTS layer on checkbox change
+    document.querySelectorAll('.lts-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const lvl = cb.getAttribute('data-lts');
+        if (cb.checked) {
+          // load LTS GeoJSON for this level (you'll need to set the correct URL)
+          fetch(`./data/lts_level_${lvl}.geojson`)
+            .then(r => r.json())
+            .then(json => {
+              ltsLayers[lvl] = L.geoJSON(json, {
+                style: () => ltsStyles[lvl]
+              }).addTo(map);
+            })
+            .catch(console.error);
+        } else if (ltsLayers[lvl]) {
+          map.removeLayer(ltsLayers[lvl]);
+          delete ltsLayers[lvl];
         }
-      }
+      });
     });
   </script>
 </body>
+
 </html>
