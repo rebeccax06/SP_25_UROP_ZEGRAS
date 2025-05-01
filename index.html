@@ -27,8 +27,9 @@
       <label for="areaSelector">Select Area:</label>
       <select id="areaSelector">
         <option value="boston">Boston (urban)</option>
-        <option value="residential">Residential Neighborhood</option>
+        <option value="mattapan">Mattapan Food and Fitness</option>
         <option value="southwest_corridor">Southwest Corridor</option>
+        <option value="roxburycc">Roxbury Community College</option>
       </select>
 
       <hr />
@@ -204,10 +205,12 @@
             if (area === "boston") {
               console.log(area);
               return "boston";
-            } else if (area === "residential") {
-              return "isochrone_testing_no_modifications_baseline_mattapan";
+            } else if (area === "mattapan") {
+              return "mattapan";
             } else if (area === "southwest_corridor") {
               return "conveyal_isochrone_spring_2025_all_modifications";
+            } else if (area === "roxburycc") {
+              return "roxburycc";
             }
           }
 
