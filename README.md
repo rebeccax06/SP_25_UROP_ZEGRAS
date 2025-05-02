@@ -15,7 +15,7 @@ This project provides a simple interactive mapping website for a workshop on bic
 
 ## Features
 
-- **Interactive Map:** Built with Leaflet, the map displays an OpenStreetMap base layer.
+- **Interactive Map:** Built with Leaflet, the map displays an OpenStreetMap base layer. The default overlay shown is LTS1
 - **Data Layers:**
   - **GeoJSON Layer:** Visualizes features such as bike lanes, intersections, and points of interest.
   - **GeoTIFF Layer:** Displays travel time surfaces or isochrone maps.
@@ -51,4 +51,5 @@ This project provides a simple interactive mapping website for a workshop on bic
         `npm install -g http-server  
         http-server . `  
         Open your browser and navigate to http://localhost:8080.
+
 
