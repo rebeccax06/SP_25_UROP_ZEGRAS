@@ -53,3 +53,5 @@ This project provides a simple interactive mapping website for a workshop on bic
         Open your browser and navigate to http://localhost:8080.
 
 
+# Legend
+https://www.cyclosm.org/legend.html

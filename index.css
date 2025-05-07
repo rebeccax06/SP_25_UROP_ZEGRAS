@@ -58,12 +58,7 @@ body {
 .line-indicator.lts1 {
   border-bottom: 3px solid  #1b9e77;
 }
-.line-indicator.lts2 {
-  border-bottom: 3px dashed #d95f02;
-}
-.line-indicator.lts3 {
-  border-bottom: 3px dotted #7570b3;
-}
+
 .line-indicator.lts4 {
   border-bottom: 3px solid  #e7298a;
 }
@@ -85,4 +80,20 @@ body {
 }
 .area-checkbox{
   margin: 4px;
+}
+
+.site-attribution {
+  position: fixed;
+  bottom: 10px;      /* distance from the bottom */
+  left: 10px;        /* distance from the left */
+  font-size: 0.75em; /* small text */
+  color: #666;       /* subtle grey */
+  background: rgba(255,255,255,0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 1000;     /* on top of map & sidebar */
+}
+
+#currentFile {
+  display: none !important;
 }
