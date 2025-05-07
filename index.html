@@ -19,13 +19,13 @@
       <h3>Bicycle Accessibility</h3>
       <br />
 
-      <label for="areaSelector">Select Area:</label>
-      <select id="areaSelector">
-        <option value="boston">Boston (urban)</option>
-        <option value="mattapan">Mattapan Food and Fitness</option>
-        <option value="southwest_corridor">Southwest Corridor</option>
-        <option value="roxburycc">Roxbury Community College</option>
-      </select>
+      <strong>Select Areas:</strong>
+      <div class="area-list">
+        <label><input type="checkbox" class="area-checkbox" value="boston" checked> Boston (urban)</label>
+        <label><input type="checkbox" class="area-checkbox" value="mattapan"> Mattapan Food and Fitness</label>
+        <label><input type="checkbox" class="area-checkbox" value="southwest_corridor"> Southwest Corridor</label>
+        <label><input type="checkbox" class="area-checkbox" value="roxburycc"> Roxbury Community College</label>
+      </div>
 
       <hr />
 
@@ -173,33 +173,55 @@
         togglePicker();
       });
 
-      // 5) Main loader
       document.getElementById('loadArea').addEventListener('click', () => {
-        clearLayers();
-        var area   = document.getElementById('areaSelector').value;
-        var prefix = area; 
+  clearLayers();
+  document.getElementById('errorMessage').textContent = '';
+  document.getElementById('loading').style.display = 'block';
 
-        // selected minutes
-        var mins = Array.from(document.querySelectorAll('.iso-checkbox:checked'))
-                      .map(cb=>cb.dataset.minutes);
+  // 1) Which areas?
+  const selectedAreas = Array.from(
+    document.querySelectorAll('.area-checkbox:checked')
+  ).map(cb => cb.value);
 
-        mins.forEach(minutes => {
-          // 5a) base isochrone
-        
-          var isoFile = `./data/${prefix}_at_${minutes}_minutes_lts1.json`;
-          fetchAndAdd(isoFile, isoStyles[minutes]);
-          
-          // 5b) its own LTS overlays
-          var ltsFor = Array.from(
-            document.querySelectorAll(`.lts-minute-checkbox[data-minutes="${minutes}"]:checked`)
-          ).map(cb=>cb.dataset.lts);
+  // 2) Which minute‐blocks?
+  const mins = Array.from(
+    document.querySelectorAll('.iso-checkbox:checked')
+  ).map(cb => cb.dataset.minutes);
 
-          ltsFor.forEach(lts => {
-            var ltsFile = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
-            fetchAndAdd(ltsFile, () => ltsStyles[lts]);
-          });
-        });
+  // 3) Prepare to collect all the fetch promises
+  let loadedFiles = [];
+  const promises = [];
+
+  selectedAreas.forEach(prefix => {
+    mins.forEach(minutes => {
+      // Always load the base (LTS 4) isochrone for fill
+      const baseFile = `./data/${prefix}_at_${minutes}_minutes_lts4.json`;
+      loadedFiles.push(baseFile);
+      promises.push(fetchAndAdd(baseFile, isoStyles[minutes]));
+
+      // Then any additional LTS lines you checked
+      const ltsLevels = Array.from(
+        document.querySelectorAll(
+          `.lts-minute-checkbox[data-minutes="${minutes}"]:checked`
+        )
+      ).map(cb => cb.dataset.lts);
+
+      ltsLevels.forEach(lts => {
+        const ltsFile = `./data/${prefix}_at_${minutes}_minutes_lts${lts}.json`;
+        loadedFiles.push(ltsFile);
+        promises.push(fetchAndAdd(ltsFile, ltsStyles[lts]));
       });
+    });
+  });
+
+  // 4) Wait for all loads to finish (or fail), then hide spinner + show files
+  Promise.all(promises)
+    .catch(err => console.error("One of the layers failed to load:", err))
+    .finally(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('currentFile').textContent = loadedFiles.join('\n');
+    });
+});
 
       // 6) Auto‐load on start
       window.addEventListener('load', () => document.getElementById('loadArea').click());
