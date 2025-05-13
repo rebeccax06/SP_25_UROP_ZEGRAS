@@ -10,6 +10,17 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/georaster"></script>
     <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.js"></script>
+    <script src="https://unpkg.com/mapbox-gl-leaflet/leaflet-mapbox-gl.js"></script>
+
     <!-- Your CSS -->
     <link rel="stylesheet" href="./index.css" />
   </head>
@@ -22,23 +33,18 @@
       <strong>Select Areas:</strong>
       <div class="area-list">
         <label
-          ><input
-            type="checkbox"
-            class="area-checkbox"
-            value="boston"
-            checked
-          />
-          Boston (urban)</label
+          ><input type="checkbox" class="area-checkbox" value="rlc" checked />
+          Reggie Lewis Center</label
+        >
+        <label
+          ><input type="checkbox" class="area-checkbox" value="boston" /> Boston
+          Commons</label
         >
         <label
           ><input type="checkbox" class="area-checkbox" value="mattapan" />
           Mattapan Food and Fitness</label
         >
 
-        <label
-          ><input type="checkbox" class="area-checkbox" value="rlc" />
-          Reggie Lewis Center</label
-        >
         <label
           ><input type="checkbox" class="area-checkbox" value="miltonhs" />
           Milton High School</label
@@ -48,7 +54,11 @@
           Cambridge Rindge & Latin School</label
         >
         <label
-          ><input type="checkbox" class="area-checkbox" value="bikes_not_bombs" />
+          ><input
+            type="checkbox"
+            class="area-checkbox"
+            value="bikes_not_bombs"
+          />
           Bikes not Bombs</label
         >
       </div>
@@ -156,6 +166,27 @@
           </div>
         </div>
       </div>
+      <br />
+
+      <strong>Toggle Landmarks:</strong>
+      <div class="landmarks-list">
+        <label
+          ><input
+            type="checkbox"
+            class="landmark-checkbox"
+            value="Community_Health_Centers"
+          />
+          Community Health Centers</label
+        >
+        <label>
+          <input
+            type="checkbox"
+            class="landmark-checkbox"
+            value="grocerystores"
+          />
+          Grocery Stores
+        </label>
+      </div>
 
       <hr />
 
@@ -170,18 +201,23 @@
 
     <script>
       // 1) Map setup
-      var map = L.map("map").setView([42.3601, -71.0589], 13);
-      L.tileLayer(
-        // "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        "https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
-        {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap contributors",
-        }
-      ).addTo(map);
+      const mapboxAccessToken =
+        "pk.eyJ1IjoicmViZWNjYXgiLCJhIjoiY21haDF2d3JlMDB5NTJycTRsb2NiMGJ4NCJ9.7ix3N4Khaj-bHDpbw1fsmQ";
+      const customMapStyle =
+        "mapbox://styles/rebeccax/cmalzawk3004501s4g1uk7trt";
 
+      // Initialize Leaflet map
+      const map = L.map("map").setView([42.3601, -71.0589], 9);
 
-    
+      // Add Mapbox GL layer with your custom style
+      const glLayer = L.mapboxGL({
+        accessToken: mapboxAccessToken,
+        style: customMapStyle,
+        attribution:
+          '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+      }).addTo(map);
+      // glLayer.bringToBack();
+
       // 2) Styles
       var isoStyles = {
         10: {
@@ -368,6 +404,98 @@
             });
         });
       }
+      const landmarkLayers = {};
+
+      // hook up each checkbox
+      document.querySelectorAll(".landmark-checkbox").forEach((cb) => {
+        cb.addEventListener("change", async () => {
+          const name = cb.value; // e.g. "grocerystores" or "Community_Health_Centers"
+
+          // if unchecked, remove existing layer
+          if (!cb.checked) {
+            if (landmarkLayers[name]) {
+              map.removeLayer(landmarkLayers[name]);
+              delete landmarkLayers[name];
+            }
+            return;
+          }
+
+          // now checked → handle each case separately
+          if (name === "grocerystores") {
+            // ── Grocery stores via Overpass ─────────────────────────────
+            const b = map.getBounds();
+            const query = `
+[out:json][timeout:25];
+node["shop"="supermarket"](${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()});
+out body;
+`;
+            try {
+              const res = await fetch(
+                "https://overpass-api.de/api/interpreter?data=" +
+                  encodeURIComponent(query)
+              );
+              if (!res.ok) throw new Error(res.statusText);
+              const data = await res.json();
+              // define your store icon
+        const storeIcon = L.divIcon({
+          html: '<i class="fa-solid fa-store fa-1x"></i>',
+          className: 'store-marker',
+          iconSize: [32, 32],
+          iconAnchor: [16, 32]
+        });
+              const group = L.layerGroup();
+              data.elements.forEach((el) => {
+                if (el.lat && el.lon) {
+                  const title = el.tags?.name || "Supermarket";
+                  L.marker([el.lat, el.lon],{icon:storeIcon})
+                    .bindPopup(`<strong>${title}</strong>`)
+                    .addTo(group);
+                }
+              });
+              group.addTo(map);
+              landmarkLayers[name] = group;
+            } catch (err) {
+              console.error("Overpass error:", err);
+            }
+          } else if (name === "Community_Health_Centers") {
+            // ── Health centers from local GeoJSON + FontAwesome icon ────
+            try {
+              const res = await fetch(`./data/${name}.geojson`);
+              if (!res.ok) throw new Error(res.statusText);
+              const json = await res.json();
+              const medicalIcon = L.divIcon({
+                html: '<i class="fa-solid fa-house-medical fa-1x"></i>',
+                className: "medical-marker",
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+              });
+              const layer = L.geoJSON(json, {
+                pointToLayer: (feature, latlng) =>
+                  L.marker(latlng, { icon: medicalIcon }),
+              }).addTo(map);
+              landmarkLayers[name] = layer;
+            } catch (err) {
+              console.error(`Failed to load ${name}.geojson:`, err);
+            }
+          } else {
+            // ── Any other local GeoJSON landmarks ────────────────────────
+            try {
+              const res = await fetch(`./data/${name}.geojson`);
+              if (!res.ok) throw new Error(res.statusText);
+              const json = await res.json();
+              const layer = L.geoJSON(json, {
+                style: { color: "#FF0000", weight: 2, opacity: 0.7 },
+              }).addTo(map);
+              landmarkLayers[name] = layer;
+            } catch (err) {
+              console.error(`Failed to load ${name}.geojson:`, err);
+            }
+          }
+        });
+
+        // trigger initial state if checkbox starts checked
+        if (cb.checked) cb.dispatchEvent(new Event("change"));
+      });
 
       // 6) Auto‐load on start
       window.addEventListener("load", () =>
@@ -376,10 +504,9 @@
     </script>
     <div class="site-attribution">
       Data © 2025 
-      <a href = "https://conveyal.com"
-      target="_blank" 
-      rel="noopener noreferrer">
-      Conveyal</a> | Rebecca X.
+      <a href="https://conveyal.com" target="_blank" rel="noopener noreferrer">
+        Conveyal</a
+      > | Rebecca X.
     </div>
   </body>
 </html>
